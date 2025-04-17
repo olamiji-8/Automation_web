@@ -10,7 +10,85 @@ export default function Home() {
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
   const [isLoaded, setIsLoaded] = useState(false);
   const heroRef = useRef(null);
+  // 1. Remove or conditionally render cursor effects
+// Add this check at the beginning of your components
+const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+// Then in your JSX, conditionally render cursor elements
+{!isMobile && (
+  <>
+    <div className="fixed w-6 h-6 rounded-full bg-pink-500 pointer-events-none z-50 transition-transform duration-75 opacity-50"
+       style={{ 
+         left: `${cursorPosition.x}px`, 
+         top: `${cursorPosition.y}px`,
+         transform: 'translate(-50%, -50%)'
+       }}></div>
+    <div className="fixed w-12 h-12 rounded-full border border-pink-500 pointer-events-none z-50 transition-transform duration-200 opacity-30"
+       style={{ 
+         left: `${cursorPosition.x}px`, 
+         top: `${cursorPosition.y}px`,
+         transform: 'translate(-50%, -50%) scale(1.5)'
+       }}></div>
+  </>
+)}
+
+// 2. Only add mousemove event listener if not on mobile
+useEffect(() => {
+  setIsLoaded(true);
   
+  const handleScroll = () => {
+    setScrollY(window.scrollY);
+  };
+  
+  window.addEventListener('scroll', handleScroll);
+  
+  // Only add mousemove listener on desktop
+  if (!isMobile) {
+    const handleMouseMove = (e) => {
+      setCursorPosition({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }
+  
+  return () => {
+    window.removeEventListener('scroll', handleScroll);
+  };
+}, []);
+
+// 3. Reduce the number of animated background elements
+// Instead of 10 blobs, use 3-4 maximum
+{!isMobile && [...Array(isMobile ? 2 : 5)].map((_, i) => (
+  <div key={i} 
+       className="absolute rounded-full bg-gradient-to-r from-pink-600 to-purple-800 blur-3xl opacity-20 animate-blob"
+       style={{ 
+         width: `${Math.random() * 500 + 300}px`,
+         height: `${Math.random() * 500 + 300}px`,
+         left: `${Math.random() * 100}%`,
+         top: `${Math.random() * 100}%`,
+         animationDelay: `${i * 0.5}s`,
+         animationDuration: `${Math.random() * 10 + 15}s`,
+       }}>
+  </div>
+))}
+
+// 4. Remove or simplify particle effects on mobile
+{!isMobile && [...Array(isMobile ? 5 : 30)].map((_, i) => (
+  <div key={i}
+       className="absolute w-1 h-1 rounded-full bg-pink-400"
+       style={{
+         left: `${Math.random() * 100}%`,
+         top: `${Math.random() * 100}%`,
+         opacity: Math.random() * 0.5 + 0.2,
+         animation: `particleFloat ${Math.random() * 10 + 20}s infinite alternate ease-in-out`,
+         animationDelay: `${Math.random() * 5}s`
+       }}>
+  </div>
+))}
   useEffect(() => {
     setIsLoaded(true);
     
@@ -59,11 +137,11 @@ export default function Home() {
           </Link>
           
           <div className="hidden md:flex space-x-8">
-            {['Home', 'Services', 'About', 'Contact'].map((item) => (
-              <Link key={item} href={item === 'Home' ? '/' : `/${item.toLowerCase()}`} 
-                   className="relative overflow-hidden group">
+            {['Home', 'Services', 'Case Studies', 'Blog', 'Contact', 'About'].map((item) => (
+              <Link key={item} href={item === 'Home' ? '/' : `/${item.toLowerCase().replace(' ', '-')}`} 
+                   className={`relative overflow-hidden group ${item === 'Home' ? 'text-pink-400' : ''}`}>
                 <span className="transition-colors duration-300 group-hover:text-pink-400">{item}</span>
-                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-pink-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
+                <span className={`absolute bottom-0 left-0 w-full h-0.5 bg-pink-500 transform ${item === 'Home' ? 'scale-x-100' : 'scale-x-0'} group-hover:scale-x-100 transition-transform duration-300 origin-left`}></span>
               </Link>
             ))}
           </div>
@@ -81,18 +159,18 @@ export default function Home() {
         {/* Mobile Menu */}
         {menuOpen && (
           <div className="md:hidden fixed inset-0 bg-gray-900 bg-opacity-95 z-30 flex flex-col items-center justify-center space-y-8 animate-fadeIn">
-            {['Home', 'Services', 'About', 'Contact'].map((item) => (
-              <Link key={item} href={item === 'Home' ? '/' : `/${item.toLowerCase()}`} 
-                   className="text-2xl font-bold"
-                   onClick={() => setMenuOpen(false)}>
-                {item}
-              </Link>
-            ))}
-            <button className="flex items-center bg-gradient-to-r from-pink-600 to-pink-800 px-6 py-3 rounded-full mt-6">
-              Get Started
-              <ArrowRight className="ml-2" />
-            </button>
-          </div>
+          {['Home', 'Services', 'Case Studies', 'Blog', 'Contact', 'About'].map((item) => (
+            <Link key={item} href={item === 'Home' ? '/' : `/${item.toLowerCase().replace(' ', '-')}`} 
+                 className={`text-2xl font-bold ${item === 'Home' ? 'text-pink-400' : ''}`}
+                 onClick={() => setMenuOpen(false)}>
+              {item}
+            </Link>
+          ))}
+          <button className="flex items-center bg-gradient-to-r from-pink-600 to-pink-800 px-6 py-3 rounded-full mt-6">
+            Get Started
+            <ArrowRight className="ml-2" />
+          </button>
+        </div>
         )}
       </nav>
 
